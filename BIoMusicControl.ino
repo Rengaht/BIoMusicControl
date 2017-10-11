@@ -31,6 +31,7 @@ int _val_button_reset,_val_button_pac,_val_button_ghost;
 
 int _val_remote_motor;
 
+bool _lock=true;
 
 
 void setup(){
@@ -74,7 +75,7 @@ void loop(){
       _state_toggle_motor=!_state_toggle_motor;
     }else if(str.indexOf("motor_speedup")!=-1){
        //Serial.println(_val_pot_motor);
-      _val_remote_motor=512;
+      _val_remote_motor=256;
       //if(_val_remote_motor>1024) _val_remote_motor=1024;
       
     }else if(str.indexOf("motor_slowdown")!=-1){
@@ -83,6 +84,8 @@ void loop(){
      // if(_val_remote_motor<0) _val_remote_motor=0;
     }else if(str.indexOf("motor_toggle")!=-1){
       _state_toggle_motor=!_state_toggle_motor;
+    }else if(str.indexOf("lock")!=-1){
+     //_lock=!_lock;
     }
   }
 
@@ -133,13 +136,14 @@ void loop(){
       }
   }else  _val_button_ghost--;
   
-  
-  bool smotor=digitalRead(TOGGLE_MOTOR)==HIGH;
-  if(smotor!=_state_toggle_motor){
-    if(smotor) sendSignal("motor_clock");
-    else sendSignal("motor_reverse");
-   
-    _state_toggle_motor=smotor;
+  if(!_lock){
+    bool smotor=digitalRead(TOGGLE_MOTOR)==HIGH;
+    if(smotor!=_state_toggle_motor){
+      if(smotor) sendSignal("motor_clock");
+      else sendSignal("motor_reverse");
+     
+      _state_toggle_motor=smotor;
+    }
   }
   bool sa=digitalRead(TOGGLE_A)==HIGH;
   if(sa!=_state_toggle_a){
@@ -160,11 +164,13 @@ void loop(){
     sendVal("speed_b",map(_val_pot_b,0,1024,0,255));
   }
 
-  int vm=analogRead(POT_MOTOR);
-  if(abs(vm-_val_pot_motor)>DTHRES){
-    _val_pot_motor=vm;
-    _val_remote_motor=_val_pot_motor; // update if controlled
-   // sendVal("speed_motor",map(_val_pot_motor,0,1024,0,255));
+  if(!_lock){
+    int vm=analogRead(POT_MOTOR);
+    if(abs(vm-_val_pot_motor)>DTHRES){
+      _val_pot_motor=vm;
+      _val_remote_motor=_val_pot_motor; // update if controlled
+     // sendVal("speed_motor",map(_val_pot_motor,0,1024,0,255));
+    }
   }
 
    //write motor
